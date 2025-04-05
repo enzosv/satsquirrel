@@ -38,13 +38,39 @@ func dailyRand(timestamp time.Time) *rand.Rand {
 }
 
 func generateRequests(topics map[string]int, day time.Weekday) map[string][]TopicRequest {
-	requests := map[string][]TopicRequest{}
 	difficulties := difficulty(day)
-	for topic, count := range topics {
-		for _, difficulty := range difficulties {
-			requests[topic] = append(requests[topic], TopicRequest{int(difficulty.Percentage) * count, difficulty.difficultyString()})
-		}
+	if len(difficulties) < 1 {
+		return nil
 	}
+
+	requests := make(map[string][]TopicRequest)
+
+	for topic, total := range topics {
+		remaining := total
+		var distributed []TopicRequest
+
+		// Distribute all but last difficulty
+		// to prevent round up and round down errors
+		for i := range len(difficulties) - 1 {
+			d := difficulties[i]
+			count := int(float64(total) * d.Percentage)
+			distributed = append(distributed, TopicRequest{
+				Count:      count,
+				Difficulty: d.difficultyString(),
+			})
+			remaining -= count
+		}
+
+		// Assign remaining to last difficulty
+		last := difficulties[len(difficulties)-1]
+		distributed = append(distributed, TopicRequest{
+			Count:      remaining,
+			Difficulty: last.difficultyString(),
+		})
+
+		requests[topic] = distributed
+	}
+
 	return requests
 }
 
