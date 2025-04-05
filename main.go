@@ -1,6 +1,7 @@
 package main
 
-func main() {
-	StartServer()
+import "log"
 
+func main() {
+	log.Fatal(startServer())
 }

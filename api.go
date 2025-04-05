@@ -5,9 +5,9 @@ import (
 	"net/http"
 )
 
-func StartServer() {
+func startServer() error {
 	http.HandleFunc("/questions", getQuestions())
-	http.ListenAndServe(":8090", nil)
+	return http.ListenAndServe(":8090", nil)
 }
 
 func getQuestions() http.HandlerFunc {
@@ -21,7 +21,10 @@ func getQuestions() http.HandlerFunc {
 		}
 		shuffled := randomize(questions, topics)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(shuffled)
+		err = json.NewEncoder(w).Encode(shuffled)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+		}
 	}
 
 }
