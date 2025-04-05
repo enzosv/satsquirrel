@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"strings"
 )
 
 // from https://github.com/Anas099X/OpenSAT
@@ -86,8 +85,6 @@ func convertToTarget(src OpenSATQuestion) Target {
 	target.Visuals.Type = src.Visuals.Type
 	target.Visuals.SvgContent = src.Visuals.SvgContent
 	target.Difficulty = src.Difficulty
-
-	// Copy question text, paragraph, and explanation
 	target.Question.Question = src.Question.Question
 	target.Question.Paragraph = src.Question.Paragraph
 	target.Question.Explanation = src.Question.Explanation
@@ -132,16 +129,24 @@ func shuffleChoices(choices []string, correctAnswerIndex int) ([]string, int) {
 }
 
 func letterToIndex(letter string) int {
-	switch strings.ToUpper(letter) {
-	case "A":
-		return 0
-	case "B":
-		return 1
-	case "C":
-		return 2
-	case "D":
-		return 3
-	default:
-		return -1 // indicates invalid answer
+	if len(letter) == 0 {
+		return -1 // Empty string
 	}
+
+	// Get the first character and convert to uppercase if needed
+	char := letter[0]
+	if char > 'D' {
+		// invalid letter
+		return -1
+	}
+	if char >= 'a' && char <= 'd' {
+		char -= 32 // Convert lowercase to uppercase (ASCII difference)
+	}
+
+	// Direct mapping from character to index
+	if char >= 'A' {
+		return int(char - 'A')
+	}
+
+	return -1 // Invalid answer
 }
