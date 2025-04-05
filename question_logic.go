@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -65,9 +66,18 @@ func randomize(allQuestions map[string][]OpenSATQuestion, topicCounts map[string
 
 	rnd := dailyRand(now)
 	topics := map[string][]Target{}
-	n := 0 // To avoid shadowing in the loop below
+	var n int
 
-	for topic, questions := range allQuestions {
+	// Get topic keys and sort them for deterministic order
+	topicKeys := make([]string, 0, len(allQuestions))
+	for k := range allQuestions {
+		topicKeys = append(topicKeys, k)
+	}
+	sort.Strings(topicKeys)
+
+	// Iterate over sorted keys
+	for _, topic := range topicKeys {
+		questions := allQuestions[topic] // Get questions for the current topic
 
 		difficulties := map[string][]OpenSATQuestion{}
 		for _, question := range questions {
