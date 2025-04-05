@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"math/rand"
 	"sort"
@@ -103,7 +104,7 @@ func groupByDifficulty(questions []OpenSATQuestion, requests []TopicRequest) map
 	return difficulties
 }
 
-func shuffleSubset(allQuestions map[string][]OpenSATQuestion, topicCounts map[string]int) map[string][]Target {
+func shuffleSubset(ctx context.Context, allQuestions map[string][]OpenSATQuestion, topicCounts map[string]int) map[string][]Target {
 	now := time.Now()
 	rnd := dailyRand(now)
 	topics := make(map[string][]Target, len(topicCounts))
@@ -141,7 +142,7 @@ func shuffleSubset(allQuestions map[string][]OpenSATQuestion, topicCounts map[st
 			}
 
 			if count > len(diffQuestions)/2 {
-				slog.Warn("Requesting large number of questions. Should use Fisher-Yates", "count", count)
+				slog.WarnContext(ctx, "Requesting large number of questions. Should use Fisher-Yates", "count", count)
 			}
 
 			// Select random subset without full shuffle

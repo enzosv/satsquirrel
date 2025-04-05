@@ -21,7 +21,7 @@ func daily() http.HandlerFunc {
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 		}
-		shuffled := shuffleSubset(questions, topics)
+		shuffled := shuffleSubset(req.Context(), questions, topics)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(w).Encode(shuffled)
 		if err != nil {
