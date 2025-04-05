@@ -65,21 +65,21 @@ func randomize(allQuestions map[string][]OpenSATQuestion, topicCounts map[string
 		count := topicCounts[topic]
 		if count > n {
 			fmt.Printf("Warning: Requested %d questions for topic '%s', but only %d available. Returning all available.\n", count, topic, n)
-			count = n // Adjust count if more questions are requested than available
+			count = n
 		}
 
-		// Perform partial Fisher-Yates shuffle (first 'count' steps)
+		// Allocate target slice directly
+		targetQuestions := make([]Target, count)
+
+		// Perform partial Fisher-Yates shuffle, converting and assigning directly
 		for i := 0; i < count; i++ {
-			// Choose index j from the range [i, n-1]
+			// Choose index j from the remaining part [i, n-1]
 			j := i + rnd.Intn(n-i)
-			// Swap questions[i] and questions[j]
+			// Swap elements in the original slice
 			questions[i], questions[j] = questions[j], questions[i]
-		}
-
-		// The first 'count' elements are now the randomly selected questions
-		targetQuestions := make([]Target, 0, count)
-		for i := 0; i < count; i++ {
-			targetQuestions = append(targetQuestions, convertToTarget(questions[i]))
+			// Convert the element now at index i (which came from index j)
+			// and place it directly into the target slice
+			targetQuestions[i] = convertToTarget(questions[i])
 		}
 		topics[topic] = targetQuestions
 	}
