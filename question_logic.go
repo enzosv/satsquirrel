@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -57,22 +58,30 @@ func randomize(allQuestions map[string][]OpenSATQuestion, topicCounts map[string
 
 	rnd := dailyRand(now)
 	topics := map[string][]Target{}
+	n := 0 // To avoid shadowing in the loop below
 
 	for topic, questions := range allQuestions {
-		shuffled := make([]OpenSATQuestion, len(questions))
-		copy(shuffled, questions)
-
-		for i := range topicCounts[topic] {
-			j := rnd.Intn(i + 1)
-			shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+		n = len(questions)
+		count := topicCounts[topic]
+		if count > n {
+			fmt.Printf("Warning: Requested %d questions for topic '%s', but only %d available. Returning all available.\n", count, topic, n)
+			count = n // Adjust count if more questions are requested than available
 		}
 
-		for _, question := range shuffled {
-			topics[topic] = append(topics[topic], convertToTarget(question))
-			if len(topics[topic]) >= topicCounts[topic] {
-				break
-			}
+		// Perform partial Fisher-Yates shuffle (first 'count' steps)
+		for i := 0; i < count; i++ {
+			// Choose index j from the range [i, n-1]
+			j := i + rnd.Intn(n-i)
+			// Swap questions[i] and questions[j]
+			questions[i], questions[j] = questions[j], questions[i]
 		}
+
+		// The first 'count' elements are now the randomly selected questions
+		targetQuestions := make([]Target, 0, count)
+		for i := 0; i < count; i++ {
+			targetQuestions = append(targetQuestions, convertToTarget(questions[i]))
+		}
+		topics[topic] = targetQuestions
 	}
 
 	return topics
