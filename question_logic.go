@@ -11,9 +11,16 @@ type Difficulty struct {
 	Percentage float64
 }
 
+type TopicRequest struct {
+	Topic      string
+	Count      int
+	Difficulty string
+}
+
 func dailyRand(timestamp time.Time) *rand.Rand {
 	// Get current date (year, month, day) as seed
 	seed := timestamp.Year()*10000 + int(timestamp.Month())*100 + timestamp.Day()
+	fmt.Println("seed", seed)
 	return rand.New(rand.NewSource(int64(seed)))
 }
 
@@ -61,7 +68,16 @@ func randomize(allQuestions map[string][]OpenSATQuestion, topicCounts map[string
 	n := 0 // To avoid shadowing in the loop below
 
 	for topic, questions := range allQuestions {
-		n = len(questions)
+
+		difficulties := map[string][]OpenSATQuestion{}
+		for _, question := range questions {
+			if question.Difficulty != "Easy" {
+				continue
+			}
+			difficulties[question.Difficulty] = append(difficulties[question.Difficulty], question)
+		}
+
+		n = len(difficulties["Easy"])
 		count := topicCounts[topic]
 		if count > n {
 			fmt.Printf("Warning: Requested %d questions for topic '%s', but only %d available. Returning all available.\n", count, topic, n)
@@ -72,15 +88,19 @@ func randomize(allQuestions map[string][]OpenSATQuestion, topicCounts map[string
 		targetQuestions := make([]Target, count)
 
 		// Perform partial Fisher-Yates shuffle, converting and assigning directly
-		for i := 0; i < count; i++ {
+		for i := range count {
 			// Choose index j from the remaining part [i, n-1]
 			j := i + rnd.Intn(n-i)
+			fmt.Println(topic, j)
 			// Swap elements in the original slice
-			questions[i], questions[j] = questions[j], questions[i]
+			difficulties["Easy"][i], difficulties["Easy"][j] = difficulties["Easy"][j], difficulties["Easy"][i]
 			// Convert the element now at index i (which came from index j)
 			// and place it directly into the target slice
-			targetQuestions[i] = convertToTarget(questions[i])
+			targetQuestions[i] = convertToTarget(difficulties["Easy"][i])
+
+			// not targetQuestions[i] = convertToTarget(difficulties["easy"][j]) to avoid duplicates
 		}
+		fmt.Println()
 		topics[topic] = targetQuestions
 	}
 
