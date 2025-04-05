@@ -26,6 +26,7 @@ type TopicRequest struct {
 	DifficultyLevel DifficultyLevel
 }
 
+// enable consistent random per day
 func dailyRand(timestamp time.Time) *rand.Rand {
 	// Get current date (year, month, day) as seed
 	seed := timestamp.Year()*10000 + int(timestamp.Month())*100 + timestamp.Day()
@@ -69,6 +70,7 @@ func generateRequests(topics map[string]int, day time.Weekday) map[string][]Topi
 	return requests
 }
 
+// for weekly challenge like new york times crossword
 func difficulty(day time.Weekday) []Difficulty {
 	switch day {
 	case time.Monday:
@@ -125,6 +127,9 @@ func groupByDifficulty(questions []OpenSATQuestion, requests []TopicRequest) map
 	return difficulties
 }
 
+// return x random questions per topic
+// random is consistent per date
+// difficulty is based on day of week
 func shuffleSubset(ctx context.Context, allQuestions map[string][]OpenSATQuestion, topicCounts map[string]int) map[string][]Target {
 	now := time.Now()
 	rnd := dailyRand(now)
