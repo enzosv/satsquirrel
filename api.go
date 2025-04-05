@@ -6,11 +6,13 @@ import (
 )
 
 func startServer() error {
-	http.HandleFunc("/questions", getQuestions())
+	http.HandleFunc("/daily", daily())
 	return http.ListenAndServe(":8090", nil)
 }
 
-func getQuestions() http.HandlerFunc {
+// always the same per day
+// return 5 english and 5 math questions with difficulty based on the day of the week
+func daily() http.HandlerFunc {
 
 	topics := map[string]int{"math": 5, "english": 5}
 
@@ -19,7 +21,7 @@ func getQuestions() http.HandlerFunc {
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 		}
-		shuffled := randomize(questions, topics)
+		shuffled := shuffleSubset(questions, topics)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(w).Encode(shuffled)
 		if err != nil {

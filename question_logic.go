@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log/slog"
 	"math/rand"
 	"sort"
 	"time"
@@ -33,7 +33,6 @@ type TopicRequest struct {
 func dailyRand(timestamp time.Time) *rand.Rand {
 	// Get current date (year, month, day) as seed
 	seed := timestamp.Year()*10000 + int(timestamp.Month())*100 + timestamp.Day()
-	fmt.Println("seed", seed)
 	return rand.New(rand.NewSource(int64(seed)))
 }
 
@@ -84,12 +83,30 @@ func difficulty(day time.Weekday) []Difficulty {
 	}
 }
 
-func randomize(allQuestions map[string][]OpenSATQuestion, topicCounts map[string]int) map[string][]Target {
+// Pre-group questions by difficulty for topic
+func groupByDifficulty(questions []OpenSATQuestion, requests []TopicRequest) map[string][]OpenSATQuestion {
+	difficulties := make(map[string][]OpenSATQuestion)
+	for _, question := range questions {
+		// Only collect questions with difficulties we need
+		needDifficulty := false
+		for _, req := range requests {
+			if req.Difficulty == question.Difficulty {
+				needDifficulty = true
+				break
+			}
+		}
+
+		if needDifficulty {
+			difficulties[question.Difficulty] = append(difficulties[question.Difficulty], question)
+		}
+	}
+	return difficulties
+}
+
+func shuffleSubset(allQuestions map[string][]OpenSATQuestion, topicCounts map[string]int) map[string][]Target {
 	now := time.Now()
-
 	rnd := dailyRand(now)
-	topics := map[string][]Target{}
-
+	topics := make(map[string][]Target, len(topicCounts))
 	requests := generateRequests(topicCounts, now.Weekday())
 
 	// Get topic keys and sort them for deterministic order
@@ -101,35 +118,49 @@ func randomize(allQuestions map[string][]OpenSATQuestion, topicCounts map[string
 
 	// Iterate over sorted keys
 	for _, topic := range topicKeys {
-		questions := allQuestions[topic] // Get questions for the current topic
-
-		difficulties := map[string][]OpenSATQuestion{}
-		for _, question := range questions {
-			// TODO: if difficulty not in request[topic], skip
-			difficulties[question.Difficulty] = append(difficulties[question.Difficulty], question)
+		if _, exists := requests[topic]; !exists {
+			// Skip topics that aren't in our requests
+			continue
 		}
 
-		// Allocate target slice directly
-		var targetQuestions []Target
+		difficulties := groupByDifficulty(allQuestions[topic], requests[topic])
 
+		// Preallocate targets slice based on total count needed
+		totalCount := 0
+		for _, req := range requests[topic] {
+			totalCount += req.Count
+		}
+		targetQuestions := make([]Target, 0, totalCount)
+
+		// Process each difficulty request
 		for _, request := range requests[topic] {
-
-			// Perform partial Fisher-Yates shuffle, converting and assigning directly
-			for i := range request.Count {
-				n := len(difficulties[request.Difficulty])
-				// Choose index j from the remaining part [i, n-1]
-				j := i + rnd.Intn(n-i)
-				fmt.Println(topic, j)
-				// Swap elements in the original slice
-				difficulties[request.Difficulty][i], difficulties[request.Difficulty][j] = difficulties[request.Difficulty][j], difficulties[request.Difficulty][i]
-				// Convert the element now at index i (which came from index j)
-				// and place it directly into the target slice
-				targetQuestions = append(targetQuestions, convertToTarget(difficulties[request.Difficulty][i]))
-
-				// not targetQuestions[i] = convertToTarget(difficulties["easy"][j]) to avoid duplicates
+			diffQuestions := difficulties[request.Difficulty]
+			count := min(request.Count, len(diffQuestions))
+			if count < 0 {
+				break
 			}
-			fmt.Println()
+
+			if count > len(diffQuestions)/2 {
+				slog.Warn("Requesting large number of questions. Should use Fisher-Yates", "count", count)
+			}
+
+			// Select random subset without full shuffle
+			// Use a map to track selected indices for small subsets
+			selected := make(map[int]bool, count)
+			for range count {
+				// Find an unselected index
+				var idx int
+				for {
+					idx = rnd.Intn(len(diffQuestions))
+					if !selected[idx] {
+						selected[idx] = true
+						break
+					}
+				}
+				targetQuestions = append(targetQuestions, convertToTarget(diffQuestions[idx]))
+			}
 		}
+
 		topics[topic] = targetQuestions
 	}
 
