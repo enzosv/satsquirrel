@@ -7,6 +7,8 @@ import (
 
 func startServer(port string) error {
 	http.HandleFunc("/daily", daily())
+	http.Handle("/", http.FileServer(http.Dir("./public")))
+
 	return http.ListenAndServe(port, nil)
 }
 
