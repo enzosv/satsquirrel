@@ -12,8 +12,20 @@ type Difficulty struct {
 	Percentage float64
 }
 
+func (d Difficulty) difficultyString() string {
+	switch d.Level {
+	case 1:
+		return "Easy"
+	case 2:
+		return "Medium"
+	case 3:
+		return "Hard"
+	default:
+		return "Unknown"
+	}
+}
+
 type TopicRequest struct {
-	Topic      string
 	Count      int
 	Difficulty string
 }
@@ -23,6 +35,17 @@ func dailyRand(timestamp time.Time) *rand.Rand {
 	seed := timestamp.Year()*10000 + int(timestamp.Month())*100 + timestamp.Day()
 	fmt.Println("seed", seed)
 	return rand.New(rand.NewSource(int64(seed)))
+}
+
+func generateRequests(topics map[string]int, day time.Weekday) map[string][]TopicRequest {
+	requests := map[string][]TopicRequest{}
+	difficulties := difficulty(day)
+	for topic, count := range topics {
+		for _, difficulty := range difficulties {
+			requests[topic] = append(requests[topic], TopicRequest{int(difficulty.Percentage) * count, difficulty.difficultyString()})
+		}
+	}
+	return requests
 }
 
 func difficulty(day time.Weekday) []Difficulty {
@@ -66,7 +89,8 @@ func randomize(allQuestions map[string][]OpenSATQuestion, topicCounts map[string
 
 	rnd := dailyRand(now)
 	topics := map[string][]Target{}
-	var n int
+
+	requests := generateRequests(topicCounts, now.Weekday())
 
 	// Get topic keys and sort them for deterministic order
 	topicKeys := make([]string, 0, len(allQuestions))
@@ -81,36 +105,31 @@ func randomize(allQuestions map[string][]OpenSATQuestion, topicCounts map[string
 
 		difficulties := map[string][]OpenSATQuestion{}
 		for _, question := range questions {
-			if question.Difficulty != "Easy" {
-				continue
-			}
+			// TODO: if difficulty not in request[topic], skip
 			difficulties[question.Difficulty] = append(difficulties[question.Difficulty], question)
 		}
 
-		n = len(difficulties["Easy"])
-		count := topicCounts[topic]
-		if count > n {
-			fmt.Printf("Warning: Requested %d questions for topic '%s', but only %d available. Returning all available.\n", count, topic, n)
-			count = n
-		}
-
 		// Allocate target slice directly
-		targetQuestions := make([]Target, count)
+		var targetQuestions []Target
 
-		// Perform partial Fisher-Yates shuffle, converting and assigning directly
-		for i := range count {
-			// Choose index j from the remaining part [i, n-1]
-			j := i + rnd.Intn(n-i)
-			fmt.Println(topic, j)
-			// Swap elements in the original slice
-			difficulties["Easy"][i], difficulties["Easy"][j] = difficulties["Easy"][j], difficulties["Easy"][i]
-			// Convert the element now at index i (which came from index j)
-			// and place it directly into the target slice
-			targetQuestions[i] = convertToTarget(difficulties["Easy"][i])
+		for _, request := range requests[topic] {
 
-			// not targetQuestions[i] = convertToTarget(difficulties["easy"][j]) to avoid duplicates
+			// Perform partial Fisher-Yates shuffle, converting and assigning directly
+			for i := range request.Count {
+				n := len(difficulties[request.Difficulty])
+				// Choose index j from the remaining part [i, n-1]
+				j := i + rnd.Intn(n-i)
+				fmt.Println(topic, j)
+				// Swap elements in the original slice
+				difficulties[request.Difficulty][i], difficulties[request.Difficulty][j] = difficulties[request.Difficulty][j], difficulties[request.Difficulty][i]
+				// Convert the element now at index i (which came from index j)
+				// and place it directly into the target slice
+				targetQuestions = append(targetQuestions, convertToTarget(difficulties[request.Difficulty][i]))
+
+				// not targetQuestions[i] = convertToTarget(difficulties["easy"][j]) to avoid duplicates
+			}
+			fmt.Println()
 		}
-		fmt.Println()
 		topics[topic] = targetQuestions
 	}
 
