@@ -5,9 +5,9 @@ import (
 	"net/http"
 )
 
-func startServer() error {
+func startServer(port string) error {
 	http.HandleFunc("/daily", daily())
-	return http.ListenAndServe(":8090", nil)
+	return http.ListenAndServe(port, nil)
 }
 
 // always the same per day

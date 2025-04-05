@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sort"
 )
 
 // from https://github.com/Anas099X/OpenSAT
@@ -49,19 +50,6 @@ type Target struct {
 	Topic      string          `json:"topic"`
 }
 
-func loadParsed(source map[string][]OpenSATQuestion) []Target {
-	// Convert each question to Target format
-	var targets []Target
-	for topic, questions := range source {
-		for _, question := range questions {
-			target := convertToTarget(question)
-			target.Topic = topic
-			targets = append(targets, target)
-		}
-	}
-	return targets
-}
-
 func loadOpenSAT(path string) (map[string][]OpenSATQuestion, error) {
 	file, err := os.ReadFile(path)
 	if err != nil {
@@ -74,6 +62,39 @@ func loadOpenSAT(path string) (map[string][]OpenSATQuestion, error) {
 		return nil, fmt.Errorf("Error parsing JSON: %w", err)
 	}
 	return source, nil
+}
+
+func listStats(stats map[string]int) {
+	keys := make([]string, 0, len(stats))
+	for k := range stats {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		fmt.Printf("\t\t%s: %d\n", key, stats[key])
+	}
+}
+
+func showStats(allQuestions map[string][]OpenSATQuestion) {
+	for topic, questions := range allQuestions {
+		fmt.Printf("%s: %d\n", topic, len(questions))
+		domains := map[string]int{}
+		difficulties := map[string]int{}
+		breakdown := map[string]int{}
+		for _, question := range questions {
+			domains[question.Domain]++
+			difficulties[question.Difficulty]++
+			breakdown[fmt.Sprintf("%s_%s", question.Domain, question.Difficulty)]++
+		}
+
+		fmt.Println("\tDOMAINS")
+		listStats(domains)
+		fmt.Println("\tDIFFICULTIES")
+		listStats(difficulties)
+		fmt.Println("\tBREAKDOWN")
+		listStats(breakdown)
+	}
 }
 
 // convertToTarget converts an OpenSATQuestion to the Target format,
