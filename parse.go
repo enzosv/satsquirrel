@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 )
@@ -76,6 +77,8 @@ func loadOpenSAT(path string) (map[string][]OpenSATQuestion, error) {
 	return source, nil
 }
 
+// convertToTarget converts an OpenSATQuestion to the Target format,
+// shuffling the choices randomly on each call.
 func convertToTarget(src OpenSATQuestion) Target {
 	var target Target
 	target.ID = src.ID
@@ -89,18 +92,43 @@ func convertToTarget(src OpenSATQuestion) Target {
 	target.Question.Paragraph = src.Question.Paragraph
 	target.Question.Explanation = src.Question.Explanation
 
-	// Convert choices from map to ordered slice
-	target.Question.Choices = []string{
+	// Store original choices and the text of the correct answer
+	originalChoices := []string{
 		src.Question.Choices.A,
 		src.Question.Choices.B,
 		src.Question.Choices.C,
 		src.Question.Choices.D,
 	}
+	correctAnswerIndex := letterToIndex(src.Question.CorrectAnswer)
+	if correctAnswerIndex < 0 || correctAnswerIndex >= len(originalChoices) {
+		// Handle invalid correct answer letter gracefully (e.g., log error, default to 0)
+		fmt.Printf("Warning: Invalid correct answer '%s' for question ID %s. Defaulting to index 0.\n", src.Question.CorrectAnswer, src.ID)
+		correctAnswerIndex = 0 // Or handle as appropriate
+	}
 
-	// Convert correct answer from letter to index
-	target.Question.CorrectAnswer = letterToIndex(src.Question.CorrectAnswer)
+	shuffled, newAnswerIndex := shuffleChoices(originalChoices, correctAnswerIndex)
+	target.Question.Choices = shuffled
+	target.Question.CorrectAnswer = newAnswerIndex
 
 	return target
+}
+
+func shuffleChoices(choices []string, correctAnswerIndex int) ([]string, int) {
+	// Keep track of the correct answer's index during the shuffle
+	currentCorrectIndex := correctAnswerIndex
+
+	// Shuffle the originalChoices slice in place, updating the correct index during swaps
+	rand.Shuffle(len(choices), func(i, j int) {
+		// Perform the swap
+		choices[i], choices[j] = choices[j], choices[i]
+		// Update the tracked index if the correct answer was involved in the swap
+		if i == currentCorrectIndex {
+			currentCorrectIndex = j
+		} else if j == currentCorrectIndex {
+			currentCorrectIndex = i
+		}
+	})
+	return choices, currentCorrectIndex
 }
 
 func letterToIndex(letter string) int {

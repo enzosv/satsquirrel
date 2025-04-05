@@ -26,5 +26,4 @@ func getQuestions() http.HandlerFunc {
 			http.Error(w, err.Error(), 500)
 		}
 	}
-
 }
