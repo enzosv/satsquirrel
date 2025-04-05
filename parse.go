@@ -45,8 +45,8 @@ type Target struct {
 		Explanation   string   `json:"explanation"`
 		CorrectAnswer int      `json:"correct_answer"`
 	} `json:"question"`
-	Difficulty string `json:"difficulty"`
-	Topic      string `json:"topic"`
+	Difficulty DifficultyLevel `json:"difficulty"`
+	Topic      string          `json:"topic"`
 }
 
 func loadParsed(source map[string][]OpenSATQuestion) []Target {
@@ -84,7 +84,7 @@ func convertToTarget(src OpenSATQuestion) Target {
 	target.Domain = src.Domain
 	target.Visuals.Type = src.Visuals.Type
 	target.Visuals.SvgContent = src.Visuals.SvgContent
-	target.Difficulty = src.Difficulty
+	target.Difficulty = DifficultyLevel(src.Difficulty)
 	target.Question.Question = src.Question.Question
 	target.Question.Paragraph = src.Question.Paragraph
 	target.Question.Explanation = src.Question.Explanation

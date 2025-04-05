@@ -8,27 +8,22 @@ import (
 	"time"
 )
 
+type DifficultyLevel string
+
+const (
+	Easy   DifficultyLevel = "Easy"
+	Medium DifficultyLevel = "Medium"
+	Hard   DifficultyLevel = "Hard"
+)
+
 type Difficulty struct {
-	Level      int
+	Level      DifficultyLevel
 	Percentage float64
 }
 
-func (d Difficulty) difficultyString() string {
-	switch d.Level {
-	case 1:
-		return "Easy"
-	case 2:
-		return "Medium"
-	case 3:
-		return "Hard"
-	default:
-		return "Unknown"
-	}
-}
-
 type TopicRequest struct {
-	Count      int
-	Difficulty string
+	Count           int
+	DifficultyLevel DifficultyLevel
 }
 
 func dailyRand(timestamp time.Time) *rand.Rand {
@@ -55,8 +50,8 @@ func generateRequests(topics map[string]int, day time.Weekday) map[string][]Topi
 			d := difficulties[i]
 			count := int(float64(total) * d.Percentage)
 			distributed = append(distributed, TopicRequest{
-				Count:      count,
-				Difficulty: d.difficultyString(),
+				Count:           count,
+				DifficultyLevel: d.Level,
 			})
 			remaining -= count
 		}
@@ -64,8 +59,8 @@ func generateRequests(topics map[string]int, day time.Weekday) map[string][]Topi
 		// Assign remaining to last difficulty
 		last := difficulties[len(difficulties)-1]
 		distributed = append(distributed, TopicRequest{
-			Count:      remaining,
-			Difficulty: last.difficultyString(),
+			Count:           remaining,
+			DifficultyLevel: last.Level,
 		})
 
 		requests[topic] = distributed
@@ -77,35 +72,35 @@ func generateRequests(topics map[string]int, day time.Weekday) map[string][]Topi
 func difficulty(day time.Weekday) []Difficulty {
 	switch day {
 	case time.Monday:
-		return []Difficulty{{Level: 1, Percentage: 1}}
+		return []Difficulty{{Level: Easy, Percentage: 1}}
 	case time.Tuesday:
 		return []Difficulty{
-			{Level: 1, Percentage: 0.5}, // 70% Easy
-			{Level: 2, Percentage: 0.5}, // 30% Medium
+			{Level: Easy, Percentage: 0.5},   // 70% Easy
+			{Level: Medium, Percentage: 0.5}, // 30% Medium
 		}
 	case time.Wednesday:
 		return []Difficulty{
-			{Level: 2, Percentage: 1.0}, // 100% Medium
+			{Level: Medium, Percentage: 1.0}, // 100% Medium
 		}
 	case time.Thursday:
 		return []Difficulty{
-			{Level: 2, Percentage: 0.7}, // 70% Medium
-			{Level: 3, Percentage: 0.3}, // 30% Hard
+			{Level: Medium, Percentage: 0.7}, // 70% Medium
+			{Level: Hard, Percentage: 0.3},   // 30% Hard
 		}
 	case time.Friday:
 		return []Difficulty{
-			{Level: 2, Percentage: 0.5}, // 50% Medium
-			{Level: 3, Percentage: 0.5}, // 50% Hard
+			{Level: Medium, Percentage: 0.5}, // 50% Medium
+			{Level: Hard, Percentage: 0.5},   // 50% Hard
 		}
 	case time.Saturday:
 		return []Difficulty{
-			{Level: 3, Percentage: 1.0}, // 100% Hard
+			{Level: Hard, Percentage: 1.0}, // 100% Hard
 		}
 	default:
 		return []Difficulty{
-			{Level: 1, Percentage: 0.33},
-			{Level: 2, Percentage: 0.34},
-			{Level: 3, Percentage: 0.33},
+			{Level: Easy, Percentage: 0.33},
+			{Level: Medium, Percentage: 0.34},
+			{Level: Hard, Percentage: 0.33},
 		}
 	}
 }
@@ -117,7 +112,7 @@ func groupByDifficulty(questions []OpenSATQuestion, requests []TopicRequest) map
 		// Only collect questions with difficulties we need
 		needDifficulty := false
 		for _, req := range requests {
-			if req.Difficulty == question.Difficulty {
+			if string(req.DifficultyLevel) == question.Difficulty {
 				needDifficulty = true
 				break
 			}
@@ -161,7 +156,7 @@ func shuffleSubset(ctx context.Context, allQuestions map[string][]OpenSATQuestio
 
 		// Process each difficulty request
 		for _, request := range requests[topic] {
-			diffQuestions := difficulties[request.Difficulty]
+			diffQuestions := difficulties[string(request.DifficultyLevel)]
 			count := min(request.Count, len(diffQuestions))
 			if count < 0 {
 				break
