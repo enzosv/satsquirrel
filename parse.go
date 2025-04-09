@@ -99,7 +99,7 @@ func showStats(allQuestions map[string][]OpenSATQuestion) {
 
 // convertToTarget converts an OpenSATQuestion to the Target format,
 // shuffling the choices randomly on each call.
-func convertToTarget(src OpenSATQuestion) Target {
+func convertToTarget(src OpenSATQuestion, topic string) Target {
 	var target Target
 	target.ID = src.ID
 	target.Domain = src.Domain
@@ -109,6 +109,7 @@ func convertToTarget(src OpenSATQuestion) Target {
 	target.Question.Question = src.Question.Question
 	target.Question.Paragraph = src.Question.Paragraph
 	target.Question.Explanation = src.Question.Explanation
+	target.Topic = topic
 
 	// Store original choices and the text of the correct answer
 	originalChoices := []string{
@@ -119,7 +120,6 @@ func convertToTarget(src OpenSATQuestion) Target {
 	}
 	correctAnswerIndex := letterToIndex(src.Question.CorrectAnswer)
 	if correctAnswerIndex < 0 || correctAnswerIndex >= len(originalChoices) {
-		// Handle invalid correct answer letter gracefully (e.g., log error, default to 0)
 		fmt.Printf("Warning: Invalid correct answer '%s' for question ID %s. Defaulting to index 0.\n", src.Question.CorrectAnswer, src.ID)
 		correctAnswerIndex = 0 // Or handle as appropriate
 	}

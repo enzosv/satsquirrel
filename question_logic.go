@@ -168,7 +168,7 @@ func shuffleSubset(ctx context.Context, allQuestions map[string][]OpenSATQuestio
 			}
 
 			if count > len(diffQuestions)/2 {
-				slog.WarnContext(ctx, "Requesting large number of questions. Should use Fisher-Yates", "count", count)
+				slog.WarnContext(ctx, "Requesting large number of questions. Try a better algo", "count", count)
 			}
 
 			// Select random subset without full shuffle
@@ -184,7 +184,7 @@ func shuffleSubset(ctx context.Context, allQuestions map[string][]OpenSATQuestio
 						break
 					}
 				}
-				targetQuestions = append(targetQuestions, convertToTarget(diffQuestions[idx]))
+				targetQuestions = append(targetQuestions, convertToTarget(diffQuestions[idx], topic))
 			}
 		}
 
