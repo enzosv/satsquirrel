@@ -1,0 +1,10 @@
+# Netlify configuration file
+
+[build]
+  publish = "public"
+  functions = "functions"
+
+[[redirects]]
+  from = "/api/daily"
+  to = "/.netlify/functions/daily"
+  status = 200

@@ -6,17 +6,16 @@ import (
 )
 
 func startServer(port string) error {
-	http.HandleFunc("/daily", daily())
+	http.HandleFunc("/api/daily", daily())
 	http.Handle("/", http.FileServer(http.Dir("./public")))
 
 	return http.ListenAndServe(port, nil)
 }
 
 // always the same per day
-// return 5 english and 5 math questions with difficulty based on the day of the week
 func daily() http.HandlerFunc {
 
-	topics := map[string]int{"math": 5, "english": 5}
+	topics := map[string]int{"math": 2, "english": 2}
 
 	return func(w http.ResponseWriter, req *http.Request) {
 		questions, err := loadOpenSAT("OpenSAT.json")
