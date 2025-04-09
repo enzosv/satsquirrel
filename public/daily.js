@@ -1,13 +1,17 @@
 import { generateQuestionElement, fetchQuestions } from "./shared.js";
-let currentQuestionSet = [];
-let currentQuestionIndex = 0;
+
+// ui elements
 let quizContainer;
 let progressBar;
 let nextButton;
 let progressIndicator;
-let mistakes = 0;
-let totalQuestions = 0;
+
 const storageKey = "quiz-history";
+
+// quiz state
+let currentQuestionSet = [];
+let currentQuestionIndex = 0;
+let mistakes = 0; // TODO: derive from correct and attempts
 const questionsAnsweredCorrectly = new Set();
 let attempts = [[]];
 let currentAttemptIndex = 0;
@@ -91,7 +95,7 @@ function submitAnswers() {
 
 function updateProgressIndicator() {
   if (progressIndicator) {
-    progressIndicator.innerHTML = `${questionsAnsweredCorrectly.size}/${totalQuestions} Correct`;
+    progressIndicator.innerHTML = `${questionsAnsweredCorrectly.size}/${initialQuestions.length} Correct`;
   }
   if (mistakes > 0) {
     const counter = document.getElementById("mistake-counter");
@@ -144,6 +148,7 @@ function showComplete() {
   closeButton.onclick = function () {
     modal.remove();
     location.reload();
+    // TODO: goto attempt page
   };
 
   const shareButton = modal.querySelector(".share-button");
@@ -207,7 +212,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
   nextButton.addEventListener("click", nextStep);
-  totalQuestions = currentQuestionSet.length;
   if (currentQuestionSet.length < 1) {
     quizContainer.innerHTML = `<div class="alert alert-warning">No questions loaded.</div>`;
     progressIndicator.textContent = "Error";
