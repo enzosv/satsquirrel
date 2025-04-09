@@ -9,6 +9,10 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
+func main() {
+	lambda.Start(handler)
+}
+
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Your server-side functionality
 	fmt.Println(request.Headers)
@@ -36,8 +40,4 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (*event
 		Headers:    map[string]string{"Content-Type": "application/json; charset=utf-8"},
 		Body:       string(jsonData),
 	}, nil
-}
-
-func main() {
-	lambda.Start(handler)
 }
