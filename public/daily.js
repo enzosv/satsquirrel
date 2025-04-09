@@ -1,7 +1,4 @@
-import {
-  generateQuestionElement,
-  fetchQuestions
-} from "./shared.js";
+import { generateQuestionElement, fetchQuestions } from "./shared.js";
 let currentQuestionSet = [];
 let currentQuestionIndex = 0;
 let initialAnswers = [];
@@ -29,13 +26,15 @@ function renderCurrentQuestion() {
     }
   );
   quizContainer.appendChild(div);
-  if(question.topic == "math") {
+  if (question.topic == "math") {
     // Tell MathJax to typeset the new content
-    MathJax.typesetPromise([quizContainer]).then(() => {
-      // Optional: Any actions after typesetting is complete
-    }).catch((err) => console.error('MathJax typesetting error:', err));
+    MathJax.typesetPromise([quizContainer])
+      .then(() => {
+        // Optional: Any actions after typesetting is complete
+      })
+      .catch((err) => console.error("MathJax typesetting error:", err));
   }
- 
+
   updateNextButtonState(false);
 }
 function updateNextButtonState(enabled, text) {
@@ -45,7 +44,8 @@ function updateNextButtonState(enabled, text) {
     nextButton.textContent = text;
     return;
   }
-  const isLastQuestionInSet = currentQuestionIndex >= currentQuestionSet.length - 1;
+  const isLastQuestionInSet =
+    currentQuestionIndex >= currentQuestionSet.length - 1;
   if (!isLastQuestionInSet) {
     nextButton.textContent = "Next";
     return;
@@ -66,7 +66,7 @@ function handleAnswer(question, option) {
   if (initialAnswers) {
     initialAnswers.push({
       question_id: question.id,
-      user_answer: option
+      user_answer: option,
     });
   }
   if (isCorrect) {
@@ -103,10 +103,10 @@ function nextStep() {
     (q) => !questionsAnsweredCorrectly.has(q.id)
   );
   if (questionsToReview.length < 1) {
-    window.location.href = window.location.href
+    window.location.href = window.location.href;
     return;
   }
-  currentQuestionSet = questionsToReview
+  currentQuestionSet = questionsToReview;
   currentQuestionIndex = 0;
   if (progressBar) {
     progressBar.value = 0;
@@ -118,9 +118,7 @@ function nextStep() {
 document.addEventListener("DOMContentLoaded", async () => {
   currentQuestionSet = await fetchQuestions();
   quizContainer = document.getElementById("quiz-container");
-  nextButton = document.getElementById(
-    "next-button"
-  );
+  nextButton = document.getElementById("next-button");
   progressIndicator = document.getElementById("progress-indicator");
   progressBar = document.getElementById("progress");
   if (!quizContainer || !nextButton || !progressIndicator) {
