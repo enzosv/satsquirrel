@@ -89,8 +89,9 @@ body {
   display: flex;
   justify-content: center;
   gap: 4px;
-  margin: 20px 0;
-  font-size: 2em;
+  margin: 2rem 0;
+  font-size: 1.5rem;
+  line-height: 2;
   user-select: all; /* Makes it easy to select all text */
 }
 
@@ -131,16 +132,22 @@ body {
 }
 
 .copied-toast {
+  display: none;
   position: fixed;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: var(--toast-bg, #4caf50);
-  color: var(--toast-text, white);
-  padding: 10px 20px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.75rem 1.5rem;
   border-radius: 4px;
-  display: none;
+  z-index: 1000;
   animation: fadeInOut 1.5s ease-in-out;
+}
+
+.complete-screen {
+  text-align: center;
+  padding: 2rem;
 }
 
 @keyframes fadeInOut {

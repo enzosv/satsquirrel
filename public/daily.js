@@ -109,7 +109,6 @@ function showComplete() {
   let results = "";
   for (let i = 0; i < attempts.length; i++) {
     const answers = attempts[i];
-    results += "<br>";
     for (const question of initialQuestions) {
       const answer = answers.find((a) => a.question_id === question.id);
       if (answer) {
@@ -121,18 +120,20 @@ function showComplete() {
         results += "🥜"; // TODO: greyed out nut
       }
     }
+    results += "<br>";
   }
 
   const date = new Date().toLocaleDateString();
-  const shareText = `${date}\n${results.replaceAll("<br>", "\n")}\n\n${
+  const shareText = `${date}\n${results.replaceAll("<br>", "\n")}\n${
     window.location.href
   }`;
 
-  const modal = document.createElement("div");
-  modal.className = "modal";
-  modal.innerHTML = `
-    <div class="modal-content">
-      <span class="close">&times;</span>
+  // Replace the page contents
+  const container = document.getElementById("container");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="complete-screen">
       <h2>Practice Complete!</h2>
       <div class="result-grid">
         ${results}
@@ -142,17 +143,8 @@ function showComplete() {
     </div>
   `;
 
-  document.body.appendChild(modal);
-
-  const closeButton = modal.querySelector(".close");
-  closeButton.onclick = function () {
-    modal.remove();
-    location.reload();
-    // TODO: goto attempt page
-  };
-
-  const shareButton = modal.querySelector(".share-button");
-  const toast = modal.querySelector(".copied-toast");
+  const shareButton = container.querySelector(".share-button");
+  const toast = container.querySelector(".copied-toast");
 
   const showToast = () => {
     toast.style.display = "block";
