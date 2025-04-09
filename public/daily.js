@@ -106,13 +106,16 @@ function showComplete() {
   for (let i = 0; i < attempts.length; i++) {
     const answers = attempts[i];
     results += "<br>";
-
-    for (const answer of answers) {
-      const question = initialQuestions.find(
-        (q) => q.id === answer.question_id
-      );
-      results +=
-        question.question.correct_answer === answer.answer ? "🥜" : "💩️️️️️️";
+    for (const question of initialQuestions) {
+      const answer = answers.find((a) => a.question_id === question.id);
+      if (answer) {
+        results +=
+          question.question.correct_answer === answer.answer
+            ? "🥜"
+            : "💩️️️️️️";
+      } else {
+        results += "🥜"; // TODO: greyed out nut
+      }
     }
   }
 
