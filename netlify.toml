@@ -4,7 +4,13 @@
   publish = "public"
   functions = "functions"
 
+[functions]
+  included_files = [
+    "/.netlify/functions/daily/OpenSAT.json"
+  ]
+
 [[redirects]]
   from = "/api/daily"
   to = "/.netlify/functions/daily"
   status = 200
+

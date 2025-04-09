@@ -1,10 +1,10 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"os"
 	"sort"
 )
 
@@ -50,11 +50,23 @@ type Target struct {
 	Topic      string          `json:"topic"`
 }
 
-func loadOpenSAT(path string) (map[string][]OpenSATQuestion, error) {
-	file, err := os.ReadFile(path)
+//go:embed OpenSAT.json
+var openSAT embed.FS
+
+func loadOpenSAT() (map[string][]OpenSATQuestion, error) {
+	file, err := openSAT.ReadFile("OpenSAT.json")
 	if err != nil {
 		return nil, err
 	}
+	// res, err := http.Get("/api/OpenSAT.json")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// defer res.Body.Close()
+	// body, err := io.ReadAll(res.Body)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	var source map[string][]OpenSATQuestion
 	err = json.Unmarshal(file, &source)

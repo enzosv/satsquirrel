@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -10,7 +11,8 @@ import (
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Your server-side functionality
-	questions, err := loadOpenSAT("OpenSAT.json")
+	fmt.Println(request.Headers)
+	questions, err := loadOpenSAT()
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			StatusCode: 500,
