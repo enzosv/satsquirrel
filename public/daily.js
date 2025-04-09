@@ -1,7 +1,6 @@
 import { generateQuestionElement, fetchQuestions } from "./shared.js";
 let currentQuestionSet = [];
 let currentQuestionIndex = 0;
-let answers = [];
 let quizContainer;
 let progressBar;
 let nextButton;
@@ -9,6 +8,9 @@ let progressIndicator;
 let mistakes = 0;
 let totalQuestions = 0;
 const storageKey = "quiz-history";
+const questionsAnsweredCorrectly = /* @__PURE__ */ new Set();
+let answers = [];
+let initialQuestions = [];
 
 function renderCurrentQuestion() {
   if (!quizContainer || currentQuestionIndex >= currentQuestionSet.length) {
@@ -43,26 +45,28 @@ function updateNextButtonState(enabled, text) {
     nextButton.textContent = "Next";
     return;
   }
-  nextButton.textContent = "Done";
-  return;
-  // REVIEW MODE
   const needsReview = currentQuestionSet.some(
     (q) => !questionsAnsweredCorrectly.has(q.id)
   );
   if (needsReview) {
-    nextButton.textContent = "Done";
+    nextButton.textContent = "Review";
     return;
   }
-  nextButton.textContent = "Again";
+  nextButton.textContent = "Done";
 }
+
 function handleAnswer(question, option) {
   question.user_answer = option;
   renderCurrentQuestion();
-  answers.push({
+  const isCorrect = option === question.question.correct_answer;
+  const answer = {
     question_id: question.id,
     answer: option,
-  });
-  if (option != question.question.correct_answer) {
+  };
+  answers.push(answer);
+  if (isCorrect) {
+    questionsAnsweredCorrectly.add(question.id);
+  } else {
     mistakes++;
   }
   if (progressBar) {
@@ -82,15 +86,11 @@ function submitAnswers() {
 
   history.push(attempt);
   localStorage.setItem(storageKey, JSON.stringify(history));
-
-  // globalThis.location.href = `attempt.html?index=${history.length - 1}`;
 }
 
 function updateProgressIndicator() {
   if (progressIndicator) {
-    progressIndicator.innerHTML = `${
-      answers.length - mistakes
-    }/${totalQuestions} Correct`;
+    progressIndicator.innerHTML = `${questionsAnsweredCorrectly.size}/${totalQuestions} Correct`;
   }
   if (mistakes > 0) {
     const counter = document.getElementById("mistake-counter");
@@ -102,16 +102,22 @@ function updateProgressIndicator() {
 
 function showComplete() {
   let results = "";
-  for (const answer of answers) {
-    const question = currentQuestionSet.find(
-      (q) => q.id === answer.question_id
-    );
+
+  for (let i = 0; i < answers.length; i++) {
+    const answer = answers[i];
+    const question = initialQuestions.find((q) => q.id === answer.question_id);
+    if (i % initialQuestions.length == 0) {
+      results += "<br>";
+    }
     results +=
       question.question.correct_answer === answer.answer ? "🥜" : "💩️️️️️️";
   }
+  // TODO: keep row consistent even by adding answers to old questions
 
   const date = new Date().toLocaleDateString();
-  const shareText = `${date}\n${results}\n\n${window.location.href}`;
+  const shareText = `${date}\n${results.replaceAll("<br>", "\n")}\n\n${
+    window.location.href
+  }`;
 
   const modal = document.createElement("div");
   modal.className = "modal";
@@ -132,6 +138,7 @@ function showComplete() {
   const closeButton = modal.querySelector(".close");
   closeButton.onclick = function () {
     modal.remove();
+    location.reload();
   };
 
   const shareButton = modal.querySelector(".share-button");
@@ -151,6 +158,7 @@ function showComplete() {
     } catch (err) {
       console.error("Failed to copy:", err);
     }
+    location.reload();
   });
 }
 
@@ -163,12 +171,27 @@ function nextStep() {
     return;
   }
 
+  const questionsToReview = currentQuestionSet.filter(
+    (q) => !questionsAnsweredCorrectly.has(q.id)
+  );
+  if (questionsToReview.length < 1) {
+    showComplete();
+    return;
+  }
   submitAnswers();
-  showComplete();
+  currentQuestionSet = questionsToReview;
+  currentQuestionIndex = 0;
+  if (progressBar) {
+    progressBar.value = 0;
+  }
+  renderCurrentQuestion();
+  updateNextButtonState(false, "Next");
+  updateProgressIndicator();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   currentQuestionSet = await fetchQuestions();
+  initialQuestions = [...currentQuestionSet];
   quizContainer = document.getElementById("quiz-container");
   nextButton = document.getElementById("next-button");
   progressIndicator = document.getElementById("progress-indicator");
