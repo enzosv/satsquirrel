@@ -29,10 +29,13 @@ function renderCurrentQuestion() {
     }
   );
   quizContainer.appendChild(div);
-  // Tell MathJax to typeset the new content
-  MathJax.typesetPromise([quizContainer]).then(() => {
-    // Optional: Any actions after typesetting is complete
-  }).catch((err) => console.error('MathJax typesetting error:', err));
+  if(question.topic == "math") {
+    // Tell MathJax to typeset the new content
+    MathJax.typesetPromise([quizContainer]).then(() => {
+      // Optional: Any actions after typesetting is complete
+    }).catch((err) => console.error('MathJax typesetting error:', err));
+  }
+ 
   updateNextButtonState(false);
 }
 function updateNextButtonState(enabled, text) {
