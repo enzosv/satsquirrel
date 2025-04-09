@@ -8,8 +8,9 @@ let progressIndicator;
 let mistakes = 0;
 let totalQuestions = 0;
 const storageKey = "quiz-history";
-const questionsAnsweredCorrectly = /* @__PURE__ */ new Set();
-let answers = [];
+const questionsAnsweredCorrectly = new Set();
+let attempts = [[]];
+let currentAttemptIndex = 0;
 let initialQuestions = [];
 
 function renderCurrentQuestion() {
@@ -63,7 +64,7 @@ function handleAnswer(question, option) {
     question_id: question.id,
     answer: option,
   };
-  answers.push(answer);
+  attempts[currentAttemptIndex].push(answer);
   if (isCorrect) {
     questionsAnsweredCorrectly.add(question.id);
   } else {
@@ -81,7 +82,7 @@ function submitAnswers() {
   const history = data ? JSON.parse(data) : [];
   const attempt = {
     timestamp: new Date().toISOString(),
-    answers: answers,
+    answers: attempts[0],
   };
 
   history.push(attempt);
@@ -102,17 +103,18 @@ function updateProgressIndicator() {
 
 function showComplete() {
   let results = "";
+  for (let i = 0; i < attempts.length; i++) {
+    const answers = attempts[i];
+    results += "<br>";
 
-  for (let i = 0; i < answers.length; i++) {
-    const answer = answers[i];
-    const question = initialQuestions.find((q) => q.id === answer.question_id);
-    if (i % initialQuestions.length == 0) {
-      results += "<br>";
+    for (const answer of answers) {
+      const question = initialQuestions.find(
+        (q) => q.id === answer.question_id
+      );
+      results +=
+        question.question.correct_answer === answer.answer ? "🥜" : "💩️️️️️️";
     }
-    results +=
-      question.question.correct_answer === answer.answer ? "🥜" : "💩️️️️️️";
   }
-  // TODO: keep row consistent even by adding answers to old questions
 
   const date = new Date().toLocaleDateString();
   const shareText = `${date}\n${results.replaceAll("<br>", "\n")}\n\n${
@@ -125,10 +127,10 @@ function showComplete() {
     <div class="modal-content">
       <span class="close">&times;</span>
       <h2>Practice Complete!</h2>
-      <div class="result-grid">${results}</div>
-      <div>
-        <button class="share-button">Share</button>
+      <div class="result-grid">
+        ${results}
       </div>
+      <button class="share-button">Share Results</button>
       <div class="copied-toast">Results copied to clipboard!</div>
     </div>
   `;
@@ -158,7 +160,6 @@ function showComplete() {
     } catch (err) {
       console.error("Failed to copy:", err);
     }
-    location.reload();
   });
 }
 
@@ -181,6 +182,8 @@ function nextStep() {
   submitAnswers();
   currentQuestionSet = questionsToReview;
   currentQuestionIndex = 0;
+  currentAttemptIndex++;
+  attempts.push([]); // Start a new attempt array for the review
   if (progressBar) {
     progressBar.value = 0;
   }
