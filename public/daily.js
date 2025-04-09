@@ -1,14 +1,15 @@
 import { generateQuestionElement, fetchQuestions } from "./shared.js";
 let currentQuestionSet = [];
 let currentQuestionIndex = 0;
-let initialAnswers = [];
-const questionsAnsweredCorrectly = /* @__PURE__ */ new Set();
+let answers = [];
 let quizContainer;
 let progressBar;
 let nextButton;
 let progressIndicator;
 let mistakes = 0;
 let totalQuestions = 0;
+const storageKey = "quiz-history";
+
 function renderCurrentQuestion() {
   if (!quizContainer || currentQuestionIndex >= currentQuestionSet.length) {
     console.error(
@@ -42,11 +43,14 @@ function updateNextButtonState(enabled, text) {
     nextButton.textContent = "Next";
     return;
   }
+  nextButton.textContent = "Done";
+  return;
+  // REVIEW MODE
   const needsReview = currentQuestionSet.some(
     (q) => !questionsAnsweredCorrectly.has(q.id)
   );
   if (needsReview) {
-    nextButton.textContent = "Review";
+    nextButton.textContent = "Done";
     return;
   }
   nextButton.textContent = "Again";
@@ -54,16 +58,11 @@ function updateNextButtonState(enabled, text) {
 function handleAnswer(question, option) {
   question.user_answer = option;
   renderCurrentQuestion();
-  const isCorrect = option === question.question.correct_answer;
-  if (initialAnswers) {
-    initialAnswers.push({
-      question_id: question.id,
-      user_answer: option,
-    });
-  }
-  if (isCorrect) {
-    questionsAnsweredCorrectly.add(question.id);
-  } else {
+  answers.push({
+    question_id: question.id,
+    answer: option,
+  });
+  if (option != question.question.correct_answer) {
     mistakes++;
   }
   if (progressBar) {
@@ -72,9 +71,26 @@ function handleAnswer(question, option) {
   updateProgressIndicator();
   updateNextButtonState(true);
 }
+
+function submitAnswers() {
+  const data = localStorage.getItem(storageKey);
+  const history = data ? JSON.parse(data) : [];
+  const attempt = {
+    timestamp: new Date().toISOString(),
+    answers: answers,
+  };
+
+  history.push(attempt);
+  localStorage.setItem(storageKey, JSON.stringify(history));
+
+  // globalThis.location.href = `attempt.html?index=${history.length - 1}`;
+}
+
 function updateProgressIndicator() {
   if (progressIndicator) {
-    progressIndicator.innerHTML = `${questionsAnsweredCorrectly.size}/${totalQuestions} Correct`;
+    progressIndicator.innerHTML = `${
+      answers.length - mistakes
+    }/${totalQuestions} Correct`;
   }
   if (mistakes > 0) {
     const counter = document.getElementById("mistake-counter");
@@ -83,6 +99,61 @@ function updateProgressIndicator() {
     }
   }
 }
+
+function showComplete() {
+  let results = "";
+  for (const answer of answers) {
+    const question = currentQuestionSet.find(
+      (q) => q.id === answer.question_id
+    );
+    results +=
+      question.question.correct_answer === answer.answer ? "🥜" : "💩️️️️️️";
+  }
+
+  const date = new Date().toLocaleDateString();
+  const shareText = `${date}\n${results}\n\n${window.location.href}`;
+
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.innerHTML = `
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Practice Complete!</h2>
+      <div class="result-grid">${results}</div>
+      <div>
+        <button class="share-button">Share</button>
+      </div>
+      <div class="copied-toast">Results copied to clipboard!</div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const closeButton = modal.querySelector(".close");
+  closeButton.onclick = function () {
+    modal.remove();
+  };
+
+  const shareButton = modal.querySelector(".share-button");
+  const toast = modal.querySelector(".copied-toast");
+
+  const showToast = () => {
+    toast.style.display = "block";
+    setTimeout(() => {
+      toast.style.display = "none";
+    }, 1500);
+  };
+
+  shareButton.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(shareText);
+      showToast();
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  });
+}
+
 function nextStep() {
   currentQuestionSet[currentQuestionIndex].user_answer = void 0;
   currentQuestionIndex++;
@@ -91,22 +162,11 @@ function nextStep() {
     updateNextButtonState(false);
     return;
   }
-  const questionsToReview = currentQuestionSet.filter(
-    (q) => !questionsAnsweredCorrectly.has(q.id)
-  );
-  if (questionsToReview.length < 1) {
-    window.location.href = window.location.href;
-    return;
-  }
-  currentQuestionSet = questionsToReview;
-  currentQuestionIndex = 0;
-  if (progressBar) {
-    progressBar.value = 0;
-  }
-  renderCurrentQuestion();
-  updateNextButtonState(false, "Next");
-  updateProgressIndicator();
+
+  submitAnswers();
+  showComplete();
 }
+
 document.addEventListener("DOMContentLoaded", async () => {
   currentQuestionSet = await fetchQuestions();
   quizContainer = document.getElementById("quiz-container");
@@ -120,7 +180,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   nextButton.addEventListener("click", nextStep);
   totalQuestions = currentQuestionSet.length;
   if (currentQuestionSet.length < 1) {
-    quizContainer.innerHTML = `<div class="alert alert-warning">No questions loaded. Cannot start review mode.</div>`;
+    quizContainer.innerHTML = `<div class="alert alert-warning">No questions loaded.</div>`;
     progressIndicator.textContent = "Error";
     return;
   }
