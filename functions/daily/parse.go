@@ -58,15 +58,6 @@ func loadOpenSAT() (map[string][]OpenSATQuestion, error) {
 	if err != nil {
 		return nil, err
 	}
-	// res, err := http.Get("/api/OpenSAT.json")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer res.Body.Close()
-	// body, err := io.ReadAll(res.Body)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	var source map[string][]OpenSATQuestion
 	err = json.Unmarshal(file, &source)
@@ -113,7 +104,6 @@ func showStats(allQuestions map[string][]OpenSATQuestion) {
 }
 
 // convertToTarget converts an OpenSATQuestion to the Target format,
-// shuffling the choices randomly on each call.
 func convertToTarget(src OpenSATQuestion, topic string) Target {
 	var target Target
 	target.ID = src.ID
@@ -126,23 +116,13 @@ func convertToTarget(src OpenSATQuestion, topic string) Target {
 	target.Question.Explanation = src.Question.Explanation
 	target.Topic = topic
 
-	// Store original choices and the text of the correct answer
-	originalChoices := []string{
+	target.Question.Choices = []string{
 		src.Question.Choices.A,
 		src.Question.Choices.B,
 		src.Question.Choices.C,
 		src.Question.Choices.D,
 	}
-	correctAnswerIndex := letterToIndex(src.Question.CorrectAnswer)
-	if correctAnswerIndex < 0 || correctAnswerIndex >= len(originalChoices) {
-		fmt.Printf("Warning: Invalid correct answer '%s' for question ID %s. Defaulting to index 0.\n", src.Question.CorrectAnswer, src.ID)
-		correctAnswerIndex = 0 // Or handle as appropriate
-	}
-
-	shuffled, newAnswerIndex := shuffleChoices(originalChoices, correctAnswerIndex)
-	target.Question.Choices = shuffled
-	target.Question.CorrectAnswer = newAnswerIndex
-
+	target.Question.CorrectAnswer = letterToIndex(src.Question.CorrectAnswer)
 	return target
 }
 
