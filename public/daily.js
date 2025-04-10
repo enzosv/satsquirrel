@@ -11,7 +11,6 @@ const storageKey = "quiz-history";
 // quiz state
 let currentQuestionSet = [];
 let currentQuestionIndex = 0;
-let mistakes = 0; // TODO: derive from correct and attempts
 const questionsAnsweredCorrectly = new Set();
 let attempts = [[]];
 let currentAttemptIndex = 0;
@@ -71,8 +70,6 @@ function handleAnswer(question, option) {
   attempts[currentAttemptIndex].push(answer);
   if (isCorrect) {
     questionsAnsweredCorrectly.add(question.id);
-  } else {
-    mistakes++;
   }
   if (progressBar) {
     progressBar.value = (currentQuestionIndex + 1) / currentQuestionSet.length;
@@ -139,7 +136,8 @@ function showComplete() {
       <div class="result-grid">
         ${results}
       </div>
-      <button class="share-button">Share Results</button>
+      <button class="share-button">Share</button>
+      <p>Check back tomorrow for more questions<br>or checkout <a href=https://www.opensat.fun>OpenSAT</a> to explore further</p>
       <div class="copied-toast">Results copied to clipboard!</div>
     </div>
   `;
