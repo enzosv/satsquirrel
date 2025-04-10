@@ -94,33 +94,34 @@ function submitAnswers() {
 }
 
 function updateProgressIndicator() {
-  if (progressIndicator) {
-    progressIndicator.innerHTML = `${questionsAnsweredCorrectly.size}/${initialQuestions.length} Correct`;
+  if (!progressIndicator) {
+    return;
   }
-  if (mistakes > 0) {
-    const counter = document.getElementById("mistake-counter");
-    if (counter) {
-      counter.innerHTML = `${mistakes} Mistake${mistakes == 1 ? "" : "s"}`;
+  progressIndicator.innerHTML = emojify(
+    attempts[currentAttemptIndex],
+    currentQuestionSet
+  );
+}
+
+function emojify(answers, set) {
+  let results = "";
+  for (const question of set) {
+    const answer = answers.find((a) => a.question_id === question.id);
+    if (!answer) {
+      results += "🐿️";
+      continue;
     }
+    results +=
+      question.question.correct_answer === answer.answer ? "🥜" : "💩️️️️️️";
   }
+  return results;
 }
 
 function showComplete() {
   let results = "";
   for (let i = 0; i < attempts.length; i++) {
     const answers = attempts[i];
-    for (const question of initialQuestions) {
-      const answer = answers.find((a) => a.question_id === question.id);
-      if (answer) {
-        results +=
-          question.question.correct_answer === answer.answer
-            ? "🥜"
-            : "💩️️️️️️";
-      } else {
-        results += "🥜"; // TODO: greyed out nut
-      }
-    }
-    results += "<br>";
+    results += emojify(answers, initialQuestions) + "<br>";
   }
 
   const date = new Date().toLocaleDateString();
