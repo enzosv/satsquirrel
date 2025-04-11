@@ -116,7 +116,42 @@ function emojify(answers, set) {
   return results;
 }
 
+function calculateStreak(history) {
+  if (!history || history.length === 0) return 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let streak = 0;
+  let currentDate = today;
+
+  // Sort history by timestamp in descending order
+  const sortedHistory = history.sort(
+    (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+  );
+
+  for (const entry of sortedHistory) {
+    const entryDate = new Date(entry.timestamp);
+    entryDate.setHours(0, 0, 0, 0);
+
+    // If this entry is not from the expected date, break the streak
+    if (currentDate.getTime() !== entryDate.getTime()) {
+      break;
+    }
+
+    streak++;
+    currentDate.setDate(currentDate.getDate() - 1);
+  }
+
+  return streak;
+}
+
 function showComplete() {
+  const data = localStorage.getItem(storageKey);
+  const history = data ? JSON.parse(data) : [];
+  const streak = calculateStreak(history);
+  console.log(streak);
+
   let results = "";
   for (let i = 0; i < attempts.length; i++) {
     const answers = attempts[i];
@@ -124,9 +159,10 @@ function showComplete() {
   }
 
   const date = new Date().toLocaleDateString();
-  const shareText = `${date}\n${results.replaceAll("<br>", "\n")}\n${
-    window.location.href
-  }`;
+  const shareText = `${date}\n🔥 ${streak} day streak\n${results.replaceAll(
+    "<br>",
+    "\n"
+  )}\n${window.location.href}`;
 
   // Replace the page contents
   const container = document.getElementById("container");
@@ -134,7 +170,7 @@ function showComplete() {
 
   container.innerHTML = `
     <div class="complete-screen">
-      <h2>Practice Complete!</h2>
+      <h2>🔥 ${streak} day streak 🔥</h2>
       <div class="result-grid">
         ${results}
       </div>
