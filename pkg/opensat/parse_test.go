@@ -1,8 +1,7 @@
-package main
+package opensat
 
 import (
 	"math/rand"
-	"strconv"
 	"testing"
 	"time"
 
@@ -10,31 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGenerateRequests(t *testing.T) {
-	t.Run("Basic Functionality", func(t *testing.T) {
-		// Arrange
-		topics := map[string]int{}
-		for i := range 100 {
-			topics[strconv.Itoa(i)] = i
-		}
-		// Act
-		for i := range 7 {
-			requests := generateRequests(topics, time.Weekday(i))
-
-			// Assert
-			for topic, total := range topics {
-				sum := 0
-				for _, request := range requests[topic] {
-					sum += request.Count
-				}
-				assert.Equal(t, topics[topic], total)
-			}
-		}
-
-	})
-}
-
-func TestShuffleChoiceas(t *testing.T) {
+func TestShuffleChoices(t *testing.T) {
 	// Set a fixed seed for reproducible tests
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -83,7 +58,7 @@ func TestShuffleChoiceas(t *testing.T) {
 		correctAnswer := choices[correctIndex]
 
 		// Shuffle multiple times
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			choices, correctIndex = shuffleChoices(choices, correctIndex)
 
 			// Verify correct answer is still at the tracked index

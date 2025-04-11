@@ -1,4 +1,4 @@
-package main
+package opensat
 
 import (
 	"context"
@@ -130,7 +130,7 @@ func groupByDifficulty(questions []OpenSATQuestion, requests []TopicRequest) map
 // return x random questions per topic
 // random is consistent per date
 // difficulty is based on day of week
-func shuffleSubset(ctx context.Context, allQuestions map[string][]OpenSATQuestion, topicCounts map[string]int) []Target {
+func ShuffleSubset(ctx context.Context, allQuestions map[string][]OpenSATQuestion, topicCounts map[string]int) []Target {
 	now := time.Now()
 	rnd := dailyRand(now)
 	topics := make(map[string][]Target, len(topicCounts))

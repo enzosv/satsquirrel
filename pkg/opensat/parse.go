@@ -1,4 +1,4 @@
-package main
+package opensat
 
 import (
 	"embed"
@@ -53,7 +53,7 @@ type Target struct {
 //go:embed OpenSAT.json
 var openSAT embed.FS
 
-func loadOpenSAT() (map[string][]OpenSATQuestion, error) {
+func LoadOpenSAT() (map[string][]OpenSATQuestion, error) {
 	file, err := openSAT.ReadFile("OpenSAT.json")
 	if err != nil {
 		return nil, err

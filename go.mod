@@ -1,4 +1,4 @@
-module squat
+module satsquirrel
 
 go 1.24
 

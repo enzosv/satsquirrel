@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"satsquirrel/pkg/opensat"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -16,7 +18,7 @@ func main() {
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Your server-side functionality
 	fmt.Println(request.Headers)
-	questions, err := loadOpenSAT()
+	questions, err := opensat.LoadOpenSAT()
 	if err != nil {
 		return &events.APIGatewayProxyResponse{
 			StatusCode: 500,
@@ -25,7 +27,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (*event
 	}
 	topics := map[string]int{"math": 2, "english": 2}
 
-	shuffled := shuffleSubset(ctx, questions, topics)
+	shuffled := opensat.ShuffleSubset(ctx, questions, topics)
 
 	jsonData, err := json.Marshal(shuffled)
 	if err != nil {
