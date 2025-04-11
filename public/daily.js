@@ -116,41 +116,53 @@ function emojify(answers, set) {
   return results;
 }
 
-function calculateStreak(history) {
-  if (!history || history.length === 0) return 0;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+function calculateStreak(entries) {
+  // entries: [{ date: 'YYYY-MM-DD', value: number }, ...]
+  const datesWithData = new Set(entries.map((entry) => entry.date));
 
   let streak = 0;
-  let currentDate = today;
+  let today = new Date();
 
-  // Sort history by timestamp in descending order
-  const sortedHistory = history.sort(
-    (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-  );
-
-  for (const entry of sortedHistory) {
-    const entryDate = new Date(entry.timestamp);
-    entryDate.setHours(0, 0, 0, 0);
-
-    // If this entry is not from the expected date, break the streak
-    if (currentDate.getTime() !== entryDate.getTime()) {
+  while (true) {
+    const yyyyMmDd = today.toISOString().split("T")[0];
+    if (datesWithData.has(yyyyMmDd)) {
+      streak++;
+      today.setDate(today.getDate() - 1);
+    } else {
       break;
     }
-
-    streak++;
-    currentDate.setDate(currentDate.getDate() - 1);
   }
 
   return streak;
 }
 
+function formatDataForHeatmap(history) {
+  const dateMap = {};
+  let earliest = "9999-12-31";
+
+  for (const entry of history) {
+    const date = entry.timestamp.split("T")[0]; // 'YYYY-MM-DD'
+    dateMap[date] = (dateMap[date] || 0) + 1;
+    if (date < earliest) {
+      earliest = date;
+    }
+  }
+
+  const formatted = Object.entries(dateMap).map(([date, value]) => ({
+    date,
+    value,
+  }));
+  return {
+    data: formatted,
+    earliest: new Date(earliest),
+  };
+}
+
 function showComplete() {
   const data = localStorage.getItem(storageKey);
   const history = data ? JSON.parse(data) : [];
-  const streak = calculateStreak(history);
-  console.log(streak);
+  const heatmapData = formatDataForHeatmap(history);
+  const streak = calculateStreak(heatmapData.data);
 
   let results = "";
   for (let i = 0; i < attempts.length; i++) {
@@ -176,9 +188,20 @@ function showComplete() {
       </div>
       <button class="share-button">Share</button>
       <p>Check back tomorrow for more questions<br>or checkout <a href=https://www.opensat.fun>OpenSAT</a> to explore further</p>
+      <div id="cal-heatmap"></div>
       <div class="copied-toast">Results copied to clipboard!</div>
     </div>
   `;
+
+  const cal = new CalHeatmap();
+  cal.paint({
+    animationDuration: 0,
+    itemSelector: "#cal-heatmap",
+    domain: { type: "month" },
+    subDomain: { type: "day", radius: 2 },
+    data: { source: heatmapData.data, x: "date", y: "value" },
+    date: { start: heatmapData.earliest },
+  });
 
   const shareButton = container.querySelector(".share-button");
   const toast = container.querySelector(".copied-toast");
