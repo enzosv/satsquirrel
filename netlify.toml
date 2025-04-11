@@ -14,3 +14,8 @@
   to = "/.netlify/functions/daily"
   status = 200
 
+[[redirects]]
+  from = "/api/questions"
+  to = "/.netlify/functions/questions"
+  status = 200
+
