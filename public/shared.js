@@ -12,6 +12,7 @@ var __publicField = (obj, key, value) =>
   __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 const letters = ["A", "B", "C", "D"];
 
+export const storageKey = "quiz-history";
 function generateQuestionElement(question, index, onSelect) {
   const div = document.createElement("div");
   div.className = "question border p-3 mb-3 rounded";

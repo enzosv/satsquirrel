@@ -1,12 +1,14 @@
-import { generateQuestionElement, fetchQuestions } from "./shared.js";
+import {
+  generateQuestionElement,
+  fetchQuestions,
+  storageKey,
+} from "./shared.js";
 
 // ui elements
 let quizContainer;
 let progressBar;
 let nextButton;
 let progressIndicator;
-
-const storageKey = "quiz-history";
 
 // quiz state
 let currentQuestionSet = [];
